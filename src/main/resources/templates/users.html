@@ -4,7 +4,9 @@
     <meta http-equiv="Content-Type" content="text/html" charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
     <title>Home - ShopMe Admin</title>
-    <link rel="stylesheet" type="text/css" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}" >
+    <link rel="stylesheet" type="text/css" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}" />
+    <link rel="stylesheet" type="text/css" th:href="@{/fontawesome/all.css}" />
+    <link rel="stylesheet" type="text/css" th:href="@{/style.css}" />
     <script type="text/javascript" th:src="@{/webjars/jquery/jquery.min.js}"></script>
     <script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
 </head>
@@ -63,7 +65,7 @@
 
         <div>
             <h1>Manage Users</h1>
-            <a th:href="@{/users/new}">Create New User</a>
+            <a th:href="@{/users/new}" class="fas fa-user-plus fa-2x icon-gray"></a>
         </div>
 
         <div th:if="${message != null}" class="alert alert-success text-center">
@@ -71,32 +73,202 @@
         </div>
 
         <div>
+            <form th:action="@{/users/page/1}" class="input-group d-flex align-items-center flex-wrap m-3">
+                <input type="hidden" name="sortField" th:value="${sortField}" />
+                <input type="hidden" name="sortDir" th:value="${sortDir}" />
+                Filter: &nbsp;
+                <input type="search" name="keyword" th:value="${keyword}" class="form-control col-auto" required />
+                &nbsp;&nbsp;
+                <button type="submit" value="Search" class="btn btn-primary">
+                    <i class="fas fa-search"></i>
+                </button>
+                &nbsp;&nbsp;
+                <button type="button" value="Clear" class="btn btn-secondary" onclick="clearFilter()">
+                    <i class="fas fa-eraser"></i>
+                </button>
+            </form>
+        </div>
+
+        <div class="full-details">
             <table class="table table-bordered table-striped table-hover table-responsive-xl">
                 <thead class="table-dark">
                     <tr>
-                        <th>User Id</th>
+                        <th>
+                            <a th:href="@{'/users/page/' + ${currPage} + '?sortField=id&sortDir='
+                            + ${sortDir == 'asc' ? 'desc' : 'asc'} + '&keyword=' + ${keyword}}"
+                               class="text-white text-decoration-none">User Id</a>
+                            <span th:if="${sortField == 'id'}"
+                                  th:class="${sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'}"></span>
+                        </th>
                         <th>Photo</th>
-                        <th>Email</th>
-                        <th>First Name</th>
-                        <th>Last Name</th>
+                        <th>
+                            <a th:href="@{'/users/page/' + ${currPage} + '?sortField=email&sortDir='
+                            + ${sortDir == 'asc' ? 'desc' : 'asc'} + '&keyword=' + ${keyword}}"
+                               class="text-white text-decoration-none">Email</a>
+                            <span th:if="${sortField == 'email'}"
+                                  th:class="${sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'}"></span>
+                        </th>
+
+                        <th>
+                            <a th:href="@{'/users/page/' + ${currPage} + '?sortField=firstName&sortDir='
+                            + ${sortDir == 'asc' ? 'desc' : 'asc'} + '&keyword=' + ${keyword}}"
+                            class="text-white text-decoration-none">First Name</a>
+                            <span th:if="${sortField == 'firstName'}"
+                            th:class="${sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'}"></span>
+                        </th>
+
+                        <th>
+                            <a th:href="@{'/users/page/' + ${currPage} + '?sortField=lastName&sortDir='
+                            + ${sortDir == 'asc' ? 'desc' : 'asc'} + '&keyword=' + ${keyword}}"
+                               class="text-white text-decoration-none">Last Name</a>
+                            <span th:if="${sortField == 'lastName'}"
+                                  th:class="${sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'}"></span>
+                        </th>
                         <th>Roles</th>
-                        <th>Enabled</th>
+                        <th>
+                            <a th:href="@{'/users/page/' + ${currPage} + '?sortField=enabled&sortDir='
+                            + ${sortDir == 'asc' ? 'desc' : 'asc'} + '&keyword=' + ${keyword}}"
+                               class="text-white text-decoration-none">Enabled</a>
+                            <span th:if="${sortField == 'enabled'}"
+                                  th:class="${sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'}"></span>
+                        </th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr th:each="user: ${usersList}">
                         <td>[[${user.id}]]</td>
-                        <td></td>
+                        <td>
+                            <span th:if="${user.photos == null}" class="fa-solid fa-user fa-3x icon-silver"></span>
+                            <img th:if="${user.photos != null}" th:src="@{${user.photosImagePath}}"
+                            style="width: 100px" />
+                        </td>
                         <td>[[${user.email}]]</td>
                         <td>[[${user.firstName}]]</td>
                         <td>[[${user.lastName}]]</td>
                         <td>[[${user.roles}]]</td>
-                        <td>[[${user.enabled}]]</td>
-                        <td>Edit &nbsp; Delete</td>
+
+                        <td>
+                            <a th:if="${user.enabled == true}"
+                               class="fas fa-check-circle fa-2x"
+                               th:href="@{'/users/enable/' + ${user.id} + '/enabled/false'}"
+                                title="Disable user"></a>
+                            <a th:if="${user.enabled == false}"
+                               class="fas fa-circle fa-2x icon-silver"
+                               th:href="@{'/users/enable/' + ${user.id} + '/enabled/true'}"
+                               title="Enable user"></a>
+                        </td>
+
+                        <td>
+                            <a class="fa-solid fa-pen-to-square fa-2x icon-green"
+                               th:href="@{'/users/update/' + ${user.id}}" title="Edit User"></a>
+                            &nbsp;
+                            <a class="fa-solid fa-trash fa-2x icon-silver link-delete"
+                               th:href="@{'/users/delete/' + ${user.id}}" title="Delete User"></a>
+                        </td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <div class="less-details">
+            <div th:each="user: ${usersList}" class="row m-1">
+                <div class="col-4 align-items-center">
+                    <span th:if="${user.photos == null}" class="fa-solid fa-user fa-3x icon-silver"></span>
+                    <img th:if="${user.photos != null}" th:src="@{${user.photosImagePath}}"
+                         style="width: 100px" />
+                </div>
+                <div class="col-8">
+                    <div>[[${user.fullName}]]</div>
+                    <div>[[${user.roles}]]</div>
+                    <div class="mt-2">
+                        <a th:if="${user.enabled == true}"
+                           class="fas fa-check-circle fa-2x icon-green"
+                           th:href="@{'/users/enable/' + ${user.id} + '/enabled/false'}"
+                           title="Disable user"></a>
+                        <a th:if="${user.enabled == false}"
+                           class="fas fa-circle fa-2x icon-silver"
+                           th:href="@{'/users/enable/' + ${user.id} + '/enabled/true'}"
+                           title="Enable user"></a>
+                        &nbsp;
+                        <a class="fa-solid fa-pen-to-square fa-2x icon-green"
+                           th:href="@{'/users/update/' + ${user.id}}" title="Edit User"></a>
+                        &nbsp;
+                        <a class="fa-solid fa-trash fa-2x icon-silver link-delete"
+                           th:href="@{'/users/delete/' + ${user.id}}" title="Delete User"></a>
+                    </div>
+                </div>
+                <div>&nbsp;</div>
+            </div>
+        </div>
+
+
+        <div class="modal fade text-center" id="confirmModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="modalTitle">Delete Confirmation</h4>
+                        <button type="button" class="close"
+                                data-dismiss="modal" onclick="hideModalDialog()">&times;</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <span>Are you sure you want to delete this User?</span>
+                    </div>
+
+                    <div class="modal-footer">
+                        <a class="btn btn-success" href="" id="yesButton">Yes</a>
+                        <button type="button" class="btn btn-danger"
+                                data-dismiss="modal" onclick="hideModalDialog()">No</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!--pagination-->
+        <div class="text-center m-1" th:if="${totalItems>0}">
+            <span>Showing users # [[${startCount}]] to [[${endCount}]] of [[${totalItems}]]</span>
+        </div>
+        <div class="text-center m-1" th:unless="${totalItems>0}">
+            <span>No users found</span>
+        </div>
+
+        <div th:if="${totalPages > 1}" class="text-center">
+            <nav>
+                <ul class="pagination justify-content-center flex-wrap">
+                    <li class="page-item">
+                        <a th:class="${currPage > 1 ? 'page-link' : 'page-link disabled'}"
+                           th:href="@{'/users/page/1?sortField=' + ${sortField} + '&sortDir='
+                            + ${sortDir} + '&keyword=' + ${keyword}}">First</a>
+
+                    </li>
+
+                    <li class="page-item">
+                        <a th:class="${currPage > 1 ? 'page-link' : 'page-link disabled'}"
+                           th:href="@{'/users/page/' + ${currPage - 1} + '?sortField=' + ${sortField} + '&sortDir='
+                            + ${sortDir} + '&keyword=' + ${keyword}}">Previous</a>
+                    </li>
+
+                    <li th:class="${currPage != i ? 'page-item' : 'page-item active'}"
+                            th:each="i : ${#numbers.sequence(1, totalPages)}" class="page-item">
+                        <a class="page-link" th:href="@{'/users/page/' + ${i} + '?sortField=' + ${sortField} + '&sortDir='
+                            + ${sortDir} + '&keyword=' + ${keyword}}">[[${i}]]</a>
+                    </li>
+
+                    <li class="page-item">
+                        <a th:class="${currPage < totalPages ? 'page-link' : 'page-link disabled'}"
+                           th:href="@{'/users/page/' + ${currPage + 1} + '?sortField=' + ${sortField} + '&sortDir='
+                            + ${sortDir} + '&keyword=' + ${keyword}}">Next</a>
+                    </li>
+
+                    <li class="page-item">
+                        <a th:class="${currPage < totalPages ? 'page-link' : 'page-link disabled'}"
+                           th:href="@{'/users/page/' + ${totalPages} + '?sortField=' + ${sortField} + '&sortDir='
+                            + ${sortDir} + '&keyword=' + ${keyword}}">Last</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
 
         <div class="text-center">
@@ -104,5 +276,25 @@
         </div>
 
     </div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $(".link-delete").on("click", function (e) {
+            e.preventDefault();
+            link=$(this);
+            $("#yesButton").attr("href", link.attr("href"));
+            $("#confirmModal").modal("show");
+        });
+    });
+
+    function hideModalDialog() {
+        $("#confirmModal").modal("hide");
+    }
+
+    function clearFilter() {
+        window.location = "[[@{/users}]]"
+    }
+</script>
+
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html" charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
-    <title>Create New User</title>
+    <title>[[${pageTitle}]]</title>
     <link rel="stylesheet" type="text/css" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}" >
     <script type="text/javascript" th:src="@{/webjars/jquery/jquery.min.js}"></script>
     <script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
@@ -63,49 +63,47 @@
         </div>
 
         <div>
-            <h1>Manage User | Create New User</h1>
+            <h1>Manage User | [[${pageTitle}]]</h1>
         </div>
 
         <form th:action="@{/users/save}" method="post" style="max-width: 700px; margin: 0 auto"
-        th:object="${user}" >
+              enctype="multipart/form-data"
+        th:object="${user}" onsubmit="return checkEmailUnique(this)">
+            <input type="hidden" th:field="*{id}" />
             <div class="border border-secondary rounded p-3">
                 <div class="mb-3">
-                    <label for="formGroupExampleInputEmail"
-                           class="col-sm-4 col-form-label">Email</label>
+                    <label class="col-sm-4 col-form-label">Email</label>
                     <input type="email" class="form-control"
-                           id="formGroupExampleInputEmail"
                            placeholder="Your Email"
                            th:field="*{email}" required
                         minlength="8" maxlength="128">
                 </div>
 
                 <div class="mb-3">
-                    <label for="formGroupExampleInputFirstName"
-                           class="form-label">First Name</label>
+                    <label class="form-label">First Name</label>
                     <input type="text" class="form-control"
-                           id="formGroupExampleInputFirstName"
                            placeholder="Your First Name"
                            th:field="*{firstName}" required
                            minlength="2" maxlength="45" >
                 </div>
 
                 <div class="mb-3">
-                    <label for="formGroupExampleInputLastName"
-                           class="form-label">Last Name</label>
+                    <label class="form-label">Last Name</label>
                     <input type="text" class="form-control"
-                           id="formGroupExampleInputLastName"
                            placeholder="Your Last Name"
                            th:field="*{lastName}" required
                            minlength="2" maxlength="45">
                 </div>
 
                 <div class="mb-3">
-                    <label for="formGroupExampleInputPassword"
-                           class="form-label">Password</label>
-                    <input type="password" class="form-control"
-                           id="formGroupExampleInputPassword"
+                    <label class="form-label">Password</label>
+                    <input th:if="${user.id == null}" type="password" class="form-control"
                            placeholder="Choose your password"
                            th:field="*{password}" required
+                           minlength="8" maxlength="20">
+                    <input th:if="${user.id != null}" type="password" class="form-control"
+                           placeholder="Leave blank if don't want to update"
+                           th:field="*{password}"
                            minlength="8" maxlength="20">
                 </div>
 
@@ -130,6 +128,20 @@
                     </div>
                 </div>
 
+                <div class="mb-3">
+                    <label class="col-sm-4 col-form-label">Photos</label>
+                    <div class="col-sm-8 p-3">
+                        <input type="hidden" th:field="*{photos}" />
+                        <input type="file" id="fileImage"
+                               name="image"
+                               accept="image/png, image/jpeg" class="mb-2"/>
+                        <img id="thumbnail" alt="Photos preview"
+                             th:src="@{${user.photosImagePath}}"
+                             style="width: 100px"
+                                class="img-fluid"/>
+                    </div>
+                </div>
+
                 <div class="text-center">
                     <button type="submit"
                             class="btn btn-primary m-3">Submit</button>
@@ -140,6 +152,28 @@
                 </div>
             </div>
         </form>
+
+        <div class="modal fade text-center" id="modalDialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="modalTitle">Warning</h4>
+                        <button type="button" class="close" data-dismiss="modal"
+                                onclick="hideModalDialog()">&times;</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <span id="modalBody"></span>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger"
+                                data-dismiss="modal" onclick="hideModalDialog()">Close</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
 
         <div class="text-center">
             <p>ShopMe Control panel - Copyright &copy; ShopMe</p>
@@ -152,7 +186,64 @@
             $("#cancelButton").on("click", function () {
                 window.location = "[[@{/users}]]";
             });
+
+            $("#fileImage").change(function () {
+                fileSize = this.files[0].size;
+                // alert("File size: " + fileSize);
+
+                if(fileSize>1048576) {
+                    this.setCustomValidity("you must choose an image less than 1MB!");
+                    this.reportValidity();
+                } else {
+                    this.setCustomValidity("");
+                    showImageThumbnail(this);
+                }
+            })
         });
+
+        function checkEmailUnique(form) {
+            url = "[[@{/users/check_email}]]";
+            userEmail = $("#email").val();
+            userId = $("#id").val();
+
+            params = {id: userId, email: userEmail};
+
+            $.post(url, params, function (response) {
+                if(response == "OK") {
+                    form.submit();
+                } else if(response == "Duplicate") {
+                    showModalDialog("Warning", "Email Already Exists");
+                } else {
+                    showModalDialog("Warning", "Some Error Occured...Try Again!!!");
+                }
+            }).fail(function () {
+                showModalDialog("Warning", "Could not connect to the server!!!");
+            });
+
+            return false;
+        }
+
+        function showModalDialog(title, message) {
+            $("#modalTitle").text(title);
+            $("#modalBody").text(message);
+            $("#modalDialog").modal("show");
+        }
+
+        function hideModalDialog() {
+            $("#modalDialog").modal("hide");
+        }
+
+        function showImageThumbnail(fileInput) {
+            var file =  fileInput.files[0];
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                $("#thumbnail").attr("src", e.target.result);
+            };
+
+            reader.readAsDataURL(file)
+        }
+
     </script>
 
 </body>
