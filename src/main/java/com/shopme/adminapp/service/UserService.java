@@ -11,8 +11,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +33,9 @@ public class UserService {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    public User getUserByEmail(String email) {
+        return userRepository.getUserByEmail(email);
+    }
 
     public List<User> listAllUsers() {
         return (List<User>) userRepository.findAll();
@@ -74,6 +75,24 @@ public class UserService {
             encodePassword(user);
         }
         return userRepository.save(user);
+    }
+
+    public User updateAccountDetails(User userInForm) {
+        User userInDB = userRepository.findById(userInForm.getId()).get();
+
+        if(!userInForm.getPassword().isEmpty()) {
+            userInDB.setPassword(userInForm.getPassword());
+            encodePassword(userInDB);
+        }
+
+        if(userInForm.getPhotos() != null) {
+            userInDB.setPhotos(userInForm.getPhotos());
+        }
+
+        userInDB.setFirstName(userInForm.getFirstName());
+        userInDB.setLastName(userInForm.getLastName());
+
+        return userRepository.save(userInDB);
     }
 
     private void encodePassword(User user) {
